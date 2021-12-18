@@ -1,0 +1,41 @@
+K8S INSTALLATION STEPS
+STEP 1: MASTER NODE INSTALLATION
+Create EC2 Instance from UBUNTU AMI with type t2.medium (2 core CPU and 4GB Ram) and
+follow below installation steps.
+1. Install apt-transport-https
+sudo apt-get install -y apt-transport-https
+sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add
+echo 'deb http://apt.kubernetes.io/ kubernetes-xenial main' > /etc/apt/sources.list.d/kubernetes.list
+2. Updating apt
+sudo apt-get update
+3. Installing docker.io
+sudo apt-get install -y docker.io
+4. Starting Docker Daemon and enable Service.
+sudo systemctl start docker
+sudo systemctl enable docker.service
+5. Installing Kubernetes master components
+sudo apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+STEP 2: Kubernetes node template is now ready create an AMI from this instance to create worker nodes.
+To create an AMI from an instance
+1. Right-click on the instance you want to use as the basis for your AMI or Click-on Actions button.
+2. Action --> Image --> Create Image
+Once the Ami is available (usually it takes 2-8 minutes to get ready), create instances with t2.micro to
+create worker nodes.
+STEP 3: Login back to Master instance created in STEP 1
+sudo su -
+kubeadm init
+1. Copy token and keep it in a separate file so that we need to run this command in worker nodes.
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+2. installing a CNI network on master node
+sysctl net.bridge.bridge-nf-call-iptables=1
+kubectl apply -f "https://cloud.weave.works/k8s/v1.13/net.yaml"
+exit
+kubectl get nodes
+STEP 4: CREATE WORKER NODES
+1. ssh to worker nodes created from STEP 2
+sudo su -
+2. run the kubeadm join <TOKEN> command which we get from STEP 3
+STEP 5: Login back to Master instance created in STEP 1
+Sudo kubectl get nodes
